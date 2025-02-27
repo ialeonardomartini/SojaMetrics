@@ -45,9 +45,9 @@ def plot_sparkline(df_ano, coluna, titulo):
 
 # ------------------------------------ Carregamento DADOS -----------------------------------------------------
 
-df = pd.read_csv("/Users/leonardomartini/Documents/Github/SojaMetrics/database/soja_mensal.csv", index_col = 0)
-df_ano = pd.read_csv("/Users/leonardomartini/Documents/Github/SojaMetrics/database/soja_anual.csv")
-df_dolar = pd.read_csv("/Users/leonardomartini/Documents/Github/SojaMetrics/database/variacao_cambial.csv", index_col=0)
+df = pd.read_csv("database/soja_mensal.csv", index_col = 0)
+df_ano = pd.read_csv("database/soja_anual.csv")
+df_dolar = pd.read_csv("database/variacao_cambial.csv", index_col=0)
 df = df[(df["ano"] >= 2000) & (df["ano"] <= 2024)]
 df_ano = df_ano[(df_ano["periodo"] >= 2000) & (df_ano["periodo"] <= 2024)]
 df_dolar = df_dolar[(df_dolar["ano"] >= 2000) & (df_dolar["ano"] <= 2024)]
