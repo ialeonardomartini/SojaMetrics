@@ -16,6 +16,6 @@ Python + Streamlit → Interface interativa
 Plotly → Gráficos dinâmicos
 Pandas → Manipulação de dados
 
-## Acesse o Dash App pelo Link Abaixo:
+## 🔗 Acesse o Dash App pelo Link Abaixo
 
- [sojametrics](https://sojametrics.streamlit.app/)
+#### Clique aqui: [sojametrics](https://sojametrics.streamlit.app/)
