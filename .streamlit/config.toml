@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "#FFC107"  #  amarelo-ouro brilhante para botões e destaques
+backgroundColor = "#121212"  # ⚫ Preto (fundo principal)
+secondaryBackgroundColor = "#1E1E1E"  # 🔲 Cinza escuro (sidebar e elementos secundários)
+textColor = "#E0E0E0"  # ⚪ Branco acinzentado (para melhor contraste)
+font = "sans serif"  # Fonte padrão
