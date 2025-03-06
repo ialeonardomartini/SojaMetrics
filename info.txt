@@ -1,7 +1,0 @@
-Saldo Oferta-Demanda = Oferta Total − Demanda Total
-
-Oferta Total = Estoque Inicial + Producao + Compra Liquida
-
-Demanda Total = Exportacao + Processamento
-
-Saldo Oferta-Demanda = Estoque Inicial + Producao + Compra Liquida - Exportacao - Processamento
