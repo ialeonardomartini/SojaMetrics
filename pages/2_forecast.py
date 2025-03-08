@@ -47,9 +47,9 @@ df_dolar["periodo"] = pd.to_datetime(df_dolar["datetime"])
 df_dolar = df_dolar.rename(columns={"close": "cambio_usdbrl"})
 
 # 2️⃣ Criar `df_saldo` com os dados mensais
-df_saldo = df[(df["ano"] >= 2000) & (df["ano"] <= 2024)]
+df_saldo = df[(df["ano"] >= 2000) & (df["ano"] <= 2024)].copy()
 df_saldo["periodo"] = pd.to_datetime(df_saldo["ano_mes"])
-df_saldo["saldo_estoque"] = df_saldo["estoque"].diff()
+df_saldo.loc[:, "saldo_estoque"] = df_saldo["estoque"].diff()
 df_saldo = df_saldo.fillna(0)
 
 # 3️⃣ Converter `df_dolar` para dados mensais pegando o último valor de cada mês
