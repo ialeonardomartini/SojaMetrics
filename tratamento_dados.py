@@ -34,6 +34,17 @@ df_balanco = df_balanco.rename(columns={"2.1.6. - Processamento": "processamento
 df_balanco = df_balanco.rename(columns={"2.1.7. - Estoque Final": "estoque_final"})
 df_balanco = df_balanco.round(2)
 
+df_dolar_ano = df_dolar.rename(columns={"datetime": "ano_mes"})
+df_dolar_ano = df_dolar_ano.rename(columns={"close": "usdbrl"})
+df_dolar_ano["ano_mes"] = pd.to_datetime(df_dolar_ano["ano_mes"])
+df_dolar_ano["ano"] = df_dolar_ano["ano_mes"].dt.year
+df_dolar_ano = df_dolar_ano.sort_values(["ano", "ano_mes"], ascending=[True, True])
+df_dolar_ano = df_dolar_ano.groupby("ano").last().reset_index()
+df_dolar_ano = df_dolar_ano[["ano", "usdbrl"]]
+df_dolar_ano = df_dolar_ano.rename(columns={"ano": "periodo"})
+
+df_balanco = pd.merge(df_balanco, df_dolar_ano, on="periodo", how="left")
+
 # exportando para csv
 df_balanco.to_csv("database/soja_anual1.csv", index=False, encoding="utf-8")
 
