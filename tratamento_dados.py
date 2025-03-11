@@ -106,17 +106,17 @@ soja_mensal["mes"] = pd.to_datetime(soja_mensal["ano_mes"]).dt.month
 
 pesos_mensais = {
     1: 0.10,  # Janeiro
-    2: 0.15,  # Fevereiro
-    3: 0.25,  # Março (Pico)
-    4: 0.20,  # Abril
-    5: 0.10,  # Maio
-    6: 0.05,  # Junho
-    7: 0.05,  # Julho
-    8: 0.05,  # Agosto
-    9: 0.05,  # Setembro
-    10: 0.05, # Outubro
-    11: 0.05, # Novembro
-    12: 0.05  # Dezembro
+    2: 0.33,  # Fevereiro
+    3: 0.33,  # Março (Pico)
+    4: 0.14,  # Abril
+    5: 0.05,  # Maio
+    6: 0.02,  # Junho
+    7: 0.02,  # Julho
+    8: 0.01,  # Agosto
+    9: 0,  # Setembro
+    10: 0, # Outubro
+    11: 0, # Novembro
+    12: 0  # Dezembro
 }
 
 producao = df_balanco[['periodo', 'producao']].rename(columns={"periodo": "ano"})
