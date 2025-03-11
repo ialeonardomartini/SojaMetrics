@@ -47,11 +47,21 @@ def plot_sparkline(df_ano, coluna, titulo):
 
 # ------------------------------------ Carregamento dos DADOS -----------------------------------------------------
 
-df = pd.read_csv("database/soja_mensal.csv", index_col = 0)
-df_ano = pd.read_csv("database/soja_anual.csv")
+# dados mensais
+df = pd.read_csv("database/soja_mensal1.csv", index_col = 0)
+df = df.dropna()
+
+
+# dados anuais
+df_ano = pd.read_csv("database/soja_anual1.csv")
+
+
+
+
+
 df_dolar = pd.read_csv("database/variacao_cambial.csv", index_col=0)
-df = df[(df["ano"] >= 2000) & (df["ano"] <= 2024)]
-df_ano = df_ano[(df_ano["periodo"] >= 2000) & (df_ano["periodo"] <= 2024)]
+#df = df[(df["ano"] >= 2000) & (df["ano"] <= 2024)]
+#df_ano = df_ano[(df_ano["periodo"] >= 2000) & (df_ano["periodo"] <= 2024)]
 df_dolar = df_dolar[(df_dolar["ano"] >= 2000) & (df_dolar["ano"] <= 2024)]
 
 
@@ -91,9 +101,9 @@ with st.container(border=True):
         with periodo:
             anos_selecionados = st.slider(
                 "Selecione o Período:", 
-                min_value=int(df["ano"].min()), 
-                max_value=int(df["ano"].max()), 
-                value=(int(df["ano"].min()), int(df["ano"].max())),
+                min_value=int(df_ano["periodo"].min()), 
+                max_value=int(df_ano["periodo"].max()), 
+                value=(int(df_ano["periodo"].min()), int(df_ano["periodo"].max())),
                                         key="slider_1"
                                         )
 
@@ -114,15 +124,20 @@ with st.container(border=True):
     # filtro e tratamento de dados
     df_kpi = df[(df["ano"] >= anos_selecionados[0]) & (df["ano"] <= anos_selecionados[1])]
     df_ano_kpi = df_ano[(df_ano["periodo"] >= anos_selecionados[0]) & (df_ano["periodo"] <= anos_selecionados[1])]
-    df_dolar_kpi = df_dolar[(df_dolar["ano"] >= anos_selecionados[0]) & (df_dolar["ano"] <= anos_selecionados[1])]
+
     df_kpi["ano_mes"] = pd.to_datetime(df_kpi["ano_mes"])
     df_kpi["periodo"] = df_kpi["ano_mes"]
     df_ano_kpi["saldo"] = df_ano_kpi["estoque_final"] - df_ano_kpi["estoque_inicial"]
-    df_dolar_kpi["periodo"] = pd.to_datetime(df_dolar_kpi["datetime"])
+
+    #df_dolar_kpi = df_dolar[(df_dolar["ano"] >= anos_selecionados[0]) & (df_dolar["ano"] <= anos_selecionados[1])]
+    #df_dolar_kpi["periodo"] = pd.to_datetime(df_dolar_kpi["datetime"])
+    
 
     # obter ultimo e penultimo ano disponiveis
-    ultimo_ano = df_kpi["ano"].max()
+    ultimo_ano = df_ano_kpi["periodo"].max()
     penultimo_ano = ultimo_ano - 1
+    ultimo_ano_mensal = df_kpi["ano"].max()
+    penultimo_ano_mensal = ultimo_ano_mensal - 1
 
     # obter dados kpis
     df_ultimo_ano = df_ano_kpi[df_ano_kpi["periodo"] == ultimo_ano]
@@ -153,7 +168,7 @@ with st.container(border=True):
                 variacao_saldo = ((dado_atual_saldo - dado_anterior_saldo) / dado_anterior_saldo) * 100
 
                 st.metric(
-                label = f"**Saldo Oferta/Demanda {df_kpi["ano"].max()} (1000 t)**",
+                label = f"**Saldo Oferta/Demanda {df_ano_kpi["periodo"].max()} (1000 t)**",
                 value = f"{dado_atual_saldo/1000:.1f}k",
                 delta = f"{variacao_saldo:.2f}% YoY",
                 border = True
@@ -164,21 +179,18 @@ with st.container(border=True):
             # Indicador do dolar
             esp, kpi, esp = st.columns([0.15,1,0.15])
             with kpi:
-                df_dolar_ultimo_ano = df_dolar_kpi[df_dolar_kpi["ano"] == ultimo_ano].sort_values("datetime")
-                df_dolar_penultimo_ano = df_dolar_kpi[df_dolar_kpi["ano"] == penultimo_ano]
-    
-                dado_atual_dolar = df_dolar_ultimo_ano["close"].iloc[-1]
-                dado_anterior_dolar = df_dolar_penultimo_ano["close"].iloc[-1]
+                dado_atual_dolar = df_ultimo_ano["usdbrl"].iloc[-1]
+                dado_anterior_dolar = df_penultimo_ano["usdbrl"].iloc[-1]
                 variacao_dolar = ((dado_atual_dolar - dado_anterior_dolar) / dado_anterior_dolar) * 100
 
                 st.metric(
-                    label = f"**Cambîo  USD/BRL {df_kpi["ano"].max()}**",
+                    label = f"**Cambîo  USD/BRL {df_ano_kpi["periodo"].max()}**",
                     value = f"{dado_atual_dolar}",
                     delta = f"{variacao_dolar:.2f}% YoY",
                     border = True
                 )
     
-            st.plotly_chart(plot_sparkline(df_dolar_kpi, "close", "Câmbio USD/BRL"), use_container_width=True, config={'displayModeBar': False})
+            st.plotly_chart(plot_sparkline(df_ano_kpi, "usdbrl", "Câmbio USD/BRL"), use_container_width=True, config={'displayModeBar': False})
 
             # Indicador de preco
             esp, kpi, esp = st.columns([0.15,1,0.15])
@@ -193,14 +205,14 @@ with st.container(border=True):
                 }
 
                 coluna_preco = tabela_preco[preco_selecionado]
-                df_preco_ultimo_ano = df_kpi[df_kpi["ano"] == ultimo_ano].sort_values("ano_mes")
-                df_preco_penultimo_ano = df_kpi[df_kpi["ano"] == penultimo_ano].sort_values("ano_mes")
+                df_preco_ultimo_ano = df_kpi[df_kpi["ano"] == ultimo_ano_mensal].sort_values("ano_mes")
+                df_preco_penultimo_ano = df_kpi[df_kpi["ano"] == penultimo_ano_mensal].sort_values("ano_mes")
                 dado_atual_preco = df_preco_ultimo_ano[coluna_preco].iloc[-1]
                 dado_anterior_preco = df_preco_penultimo_ano[coluna_preco].iloc[-1]
                 variacao_preco = ((dado_atual_preco - dado_anterior_preco) / dado_anterior_preco) * 100
     
                 st.metric(
-                    label = f"**{preco_selecionado}**",
+            label = f"**{df_kpi["ano"].max()} {preco_selecionado}**",
                     value = f"{dado_atual_preco:.2f}",
                     delta = f"{variacao_preco:.2f}% YoY",
                     border = True
@@ -224,7 +236,7 @@ with st.container(border=True):
                 variacao_estoque = ((dado_atual_estoque - dado_anterior_estoque) / dado_anterior_estoque) * 100
 
                 st.metric(
-                    label = f"**Estoque Inicial {df_kpi["ano"].max()} (1000 t)**",
+                    label = f"**Estoque Inicial {df_ano_kpi["periodo"].max()} (1000 t)**",
                     value = f"{dado_atual_estoque}",
                     delta = f"{variacao_estoque:.2f}% YoY",
                     border = True
@@ -240,7 +252,7 @@ with st.container(border=True):
                 variacao_prod = ((dado_atual_prod - dado_anterior_prod) / dado_anterior_prod) * 100
 
                 st.metric(
-                    label = f"**Produção {df_kpi["ano"].max()} (1000 t)**",
+                    label = f"**Produção {df_ano_kpi["periodo"].max()} (1000 t)**",
                     value = f"{dado_atual_prod/1000:.1f}k",
                     delta = f"{variacao_prod:.2f}% YoY",
                     border = True
@@ -256,7 +268,7 @@ with st.container(border=True):
                 variacao_imp = ((dado_atual_imp - dado_anterior_imp) / dado_anterior_imp) * 100
 
                 st.metric(
-                    label = f"**Importação {df_kpi["ano"].max()} (1000 t)**",
+                    label = f"**Importação {df_ano_kpi["periodo"].max()} (1000 t)**",
                     value = f"{dado_atual_imp}",
                     delta = f"{variacao_imp:.2f}% YoY",
                     border = True
@@ -282,7 +294,7 @@ with st.container(border=True):
                 variacao_exp = ((dado_atual_exp - dado_anterior_exp) / dado_anterior_exp) * 100
 
                 st.metric(
-                    label = f"**Exportação {df_kpi["ano"].max()} (1000 t)**",
+                    label = f"**Exportação {df_ano_kpi["periodo"].max()} (1000 t)**",
                     value = f"{dado_atual_exp/1000:.1f}k",
                     delta = f"{variacao_exp:.2f}% YoY",
                     border = True
@@ -299,7 +311,7 @@ with st.container(border=True):
                 variacao_proc = ((dado_atual_proc - dado_anterior_proc) / dado_anterior_proc) * 100
 
                 st.metric(
-                    label = f"**Processamento {df_kpi["ano"].max()} (1000 t)**",
+                    label = f"**Processamento {df_ano_kpi["periodo"].max()} (1000 t)**",
                     value = f"{dado_atual_proc/1000:.1f}k",
                     delta = f"{variacao_proc:.2f}% YoY",
                     border = True
@@ -337,9 +349,9 @@ with st.container(border=True):
         with periodo:
             anos_selecionados_2 = st.slider(
                 "Selecione o Período:",
-                min_value=int(df["ano"].min()),
-                max_value=int(df["ano"].max()),
-                value=(int(df["ano"].min()), int(df["ano"].max())),
+                min_value=int(df_ano["periodo"].min()),
+                max_value=int(df_ano["periodo"].max()),
+                value=(int(df_ano["periodo"].min()), int(df_ano["periodo"].max())),
                 key="slider_2"
             )
 
@@ -354,10 +366,8 @@ with st.container(border=True):
             )
 
     # filtro e tratamento de dados
-    df_dolar_secao2 = df_dolar[(df_dolar["ano"] >= anos_selecionados_2[0]) & (df_dolar["ano"] <= anos_selecionados_2[1])]
-    df_dolar_secao2["periodo"] = pd.to_datetime(df_dolar_secao2["datetime"])
-    df_secao2 = df[(df["ano"] >= anos_selecionados_2[0]) & (df["ano"] <= anos_selecionados_2[1])]
-    df_secao2["periodo"] = df_secao2["ano_mes"]
+    df_usdbrl = df[(df["ano"] >= anos_selecionados_2[0]) & (df["ano"] <= anos_selecionados_2[1])]
+    df_usdbrl["periodo"] = pd.to_datetime(df_usdbrl["ano_mes"])
 
     # container do insight sobre o cambio
     with st.container(border=False):
@@ -379,8 +389,8 @@ with st.container(border=True):
 
         # Adicionando linha do câmbio ao longo do tempo
         fig_cambio.add_trace(go.Scatter(
-            x=df_dolar_secao2["periodo"],
-            y=df_dolar_secao2["close"],
+            x=df_usdbrl["periodo"],
+            y=df_usdbrl["usdbrl"],
             mode='lines',
             name='Câmbio USD/BRL',
             line=dict(color='#FF8800', width=3)
@@ -388,14 +398,14 @@ with st.container(border=True):
 
         # Identificando e destacando a variação anual
 
-        df_ultimo_dia_do_ano = df_dolar_secao2.groupby("ano").last().reset_index()
-        df_ultimo_dia_do_ano["var_anual"] = df_ultimo_dia_do_ano["close"].pct_change()*100
+        df_ultimo_dia_do_ano = df_usdbrl.groupby("ano").last().reset_index()
+        df_ultimo_dia_do_ano["var_anual"] = df_ultimo_dia_do_ano["usdbrl"].pct_change()*100
         df_ultimo_dia_do_ano = df_ultimo_dia_do_ano.fillna(0)
 
         for i in range(1, len(df_ultimo_dia_do_ano)):
             ano = df_ultimo_dia_do_ano["ano"].iloc[i]
             periodo = df_ultimo_dia_do_ano["periodo"].iloc[i]
-            valor = df_ultimo_dia_do_ano["close"].iloc[i]
+            valor = df_ultimo_dia_do_ano["usdbrl"].iloc[i]
             variacao_anual = df_ultimo_dia_do_ano["var_anual"].iloc[i]
         
             fig_cambio.add_annotation(
@@ -437,10 +447,10 @@ with st.container(border=True):
 
                 # Definir a posição da anotação (topo para os 3 primeiros, base para os demais)
             if i < 3:
-                y_pos = df_dolar_secao2["close"].max()+1.5  # Anotações superiores
+                y_pos = df_usdbrl["usdbrl"].max()+1.5  # Anotações superiores
                 ay = -60  # Direção da seta para cima
             else:
-                y_pos = df_dolar_secao2["close"].min()  # Anotações inferiores
+                y_pos = df_usdbrl["usdbrl"].min()  # Anotações inferiores
                 ay = 60  # Direção da seta para baixo
 
             # Transformar espaços em quebras de linha usando "<br>"
@@ -506,8 +516,8 @@ with st.container(border=True):
     
             fig_comp = go.Figure()
             fig_comp.add_trace(go.Scatter(
-                x=df_dolar_secao2["periodo"],
-                y=df_dolar_secao2["close"],
+                x=df_usdbrl["periodo"],
+                y=df_usdbrl["usdbrl"],
                 mode='lines',
                 name='Câmbio USD/BRL',
                 yaxis='y1',
@@ -527,12 +537,12 @@ with st.container(border=True):
 
 
             fig_comp.add_trace(go.Scatter(
-                x=df_secao2["periodo"],
-                y=df_secao2[coluna_preco_2],
+                x=df_usdbrl["periodo"],
+                y=df_usdbrl[coluna_preco_2],
                 mode='lines',
                 name='Preço da Soja',
                 yaxis='y2',
-                line=dict(color='#008000', width=2)
+                line=dict(color='#ADFF2F', width=2)
             ))
 
             fig_comp.update_layout(
@@ -564,7 +574,9 @@ with st.container(border=True):
                 legend=dict(
                     orientation="h",  # Deixa a legenda horizontal
                     yanchor="top",
-                    y=-0.3 # Posiciona a legenda abaixo do gráfico
+                    y=-0.3, # Posiciona a legenda abaixo do gráfico
+                    xanchor="center",  # Centraliza a legenda
+                    x=0.5
                 ),
                 margin=dict(l=10, r=10, t=20, b=10)
             )
@@ -576,31 +588,20 @@ with st.container(border=True):
         with st.container(border=True): # cria container
             st.markdown("<h5 style='text-align: center;'> 🔍 Correlação entre Câmbio e Preço da Soja</h5>", unsafe_allow_html=True)
 
-            df_dolar_secao2["periodo"] = pd.to_datetime(df_dolar_secao2["ano"].astype(str) + "-" + df_dolar_secao2["mes"].astype(str) + "-01")
-            df_secao2["periodo"] = pd.to_datetime(df_secao2["periodo"])
-            df_dolar_secao2.info()
-            df_secao2.info()
-
-            df_merged = pd.merge(df_secao2[["periodo", "chicago_cbot_u$/t", "fob_porto_paranagua_u$/t", "maringa_r$/saca", "mogiana_r$/saca", "passofundo_r$/saca", "rondonopolis_r$/saca"]], df_dolar_secao2[["periodo", "close"]], on="periodo", how="outer")
-
-            # Criar coluna de ano para colorir os pontos por período
-            df_merged["ano"] = df_merged["periodo"].dt.year
-
-
-            fig_scatter = px.scatter(
-                df_merged, 
+            fig_scatter1 = px.scatter(
+                df_usdbrl, 
                 x=coluna_preco_2, 
-                y="close", 
+                y="usdbrl", 
                 color="ano",
-                color_continuous_scale="viridis",
+                color_continuous_scale="RdYlGn",
                 trendline="ols",  # Adiciona a linha de tendência automaticamente
                 trendline_color_override="blue",
-                labels={coluna_preco_2: f"Preço da Soja ({preco_selecionado_2})", "close": "Câmbio (USD/BRL)"},
+                labels={coluna_preco_2: f"Preço da Soja ({preco_selecionado_2})", "usdbrl": "Câmbio (USD/BRL)"},
                 color_discrete_sequence=["#ADFF2F"],
-                opacity=0.7
+                opacity=1
             )
 
-            fig_scatter.update_layout(
+            fig_scatter1.update_layout(
                 xaxis=dict(
                     title = f"Preço da Soja ({preco_selecionado_2})",
                     showline=True,
@@ -617,10 +618,10 @@ with st.container(border=True):
                 margin=dict(l=10, r=10, t=20, b=10)
             )
 
-            st.plotly_chart(fig_scatter, use_container_width=True)
+            st.plotly_chart(fig_scatter1, use_container_width=True)
 
 
-    # correlacao e insights do preço
+    # correlacao e insights do cambio
     col, col1, col2, esp = st.columns([0.15,1.2,2.5,0.15])
 
     # correlacao cambio e preco
@@ -630,13 +631,13 @@ with st.container(border=True):
             #st.markdown("<br>", unsafe_allow_html=True)  # Adiciona espaço entre os blocos
     
             # Calcular correlação
-            correlacao = df_merged["close"].corr(df_merged[coluna_preco_2])
+            correlacao_cambio = df_usdbrl["usdbrl"].corr(df_usdbrl[coluna_preco_2])
 
             # Exibir resultado formatado
             st.metric(
             label="Correlação de Pearson (USD/BRL vs. Preço Soja)",
-            value=f"{correlacao:.4f}",
-            delta="Positiva" if correlacao > 0 else "Negativa",
+            value=f"{correlacao_cambio:.4f}",
+            delta="Positiva" if correlacao_cambio > 0 else "Negativa",
             border = True
             )
 
@@ -662,108 +663,87 @@ with st.container(border=True):
     
     # container titulo cambio
     with st.container(border=True):
-        titulo, periodo, espaco = st.columns([2, 1, 0.3])
+        titulo, espm, periodo, espm, tipo_preco = st.columns([2, 0.1, 1, 0.1, 1.5])
 
         with titulo:
-            st.markdown("<h4 style='text-align: center; margin-top: 18px;'> 🧐 Análise da Oferta: Produção, Importação e Estoques</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='text-align: center; margin-top: 18px;'> 🧐 Oferta: Produção, Importação e Estoques</h4>", unsafe_allow_html=True)
 
         with periodo:
             anos_selecionados_3 = st.slider(
                 "Selecione o Período:",
-                min_value=int(df["ano"].min()),
-                max_value=int(df["ano"].max()),
-                value=(int(df["ano"].min()), int(df["ano"].max())),
+                min_value=int(df_ano["periodo"].min()),
+                max_value=int(df_ano["periodo"].max()),
+                value=(int(df_ano["periodo"].min()), int(df_ano["periodo"].max())),
                 key="slider_3"
             )
+
+        with tipo_preco:
+            preco_selecionado_3 = st.selectbox(
+                "Selecione o Preço:",
+                ["Chicago - CBOT (US$/t)", "FOB Porto - Paranaguá (US$/t)", 
+                "Maringá / PR - R$/saca (sem ICMS)", "Mogiana / SP - R$/saca (sem ICMS)", 
+                "Passo Fundo / RS - R$/saca (sem ICMS)", "Rondonopolis / MT - R$/saca (sem ICMS)"],
+                index=5,
+                key="select_3"
+        )
 
     # filtro e tratamento de dados
     df_oferta = df[(df["ano"] >= anos_selecionados_3[0]) & (df["ano"] <= anos_selecionados_3[1])]
     df_oferta["periodo"] = pd.to_datetime(df_oferta["ano_mes"])
+    
     df_oferta_anual = df_ano[(df_ano["periodo"] >= anos_selecionados_3[0]) & (df_ano["periodo"] <= anos_selecionados_3[1])]
 
-    # container graficos      
+    # container estoques     
     with st.container(border=False):
         col1 , col2 = st.columns(2)
 
-        # grafico producao e importacao
         with col1:
-
-            with st.container(border=True):
-                st.markdown("<h5 style='text-align: center;'> 🚜 Produção e Importação Anual</h5>", unsafe_allow_html=True)
-                fig_prod_imp = go.Figure()
-
-                fig_prod_imp.add_trace(go.Scatter(
-                    x=df_oferta_anual["periodo"], 
-                    y=df_oferta_anual["producao"], 
-                    mode="lines+markers",
-                    name="Produção Anual" ,
-                    line=dict(color="#FF8800", width=2),
-                    yaxis="y2"
-                ))
-
-                fig_prod_imp.add_trace(go.Bar(
-                    x=df_oferta_anual["periodo"], 
-                    y=df_oferta_anual["importacao"], 
-                    marker_color="#008000",
-                    name="Importação Anual",
-                    opacity=0.7,
-                    yaxis="y1"
-                ))
-
-                fig_prod_imp.update_layout(
-                    xaxis=dict(
-                        title="Ano",
-                        showline=True,
-                        linecolor="gray",
-                        linewidth=1,
-                        tickmode="linear",
-                        dtick="2",
-                        tickangle=45
-                    ),
-                    yaxis2=dict(
-                        title="Produção Mil Toneladas",
-                        side="left",
-                        overlaying="y",
-                        showline=True,
-                        linecolor="gray",
-                        linewidth=1
-                    ),
-                    yaxis=dict(
-                        title="Importação Mil Toneladas",
-                        side="right",
-                        showline=True,
-                        linecolor="gray",
-                        linewidth=1
-                    ),
-                    legend=dict(
-                        orientation="h", 
-                        yanchor="top", 
-                        y=-0.28,
-                        x=0.2
-                        ),
-                    height=400,
-                    margin=dict(l=10, r=10, t=20, b=10)
-                )
-       
-        
-                st.plotly_chart(fig_prod_imp, use_container_width=True)
-
-        # grafico estoques
-        with col2:
-
             with st.container(border=True):
                 st.markdown("<h5 style='text-align: center;'> 📈 Evolução dos Estoques</h5>", unsafe_allow_html=True)
+                
+                # Calcular a média móvel (ajustável)
+                window_size = 12  # Tamanho da janela da média móvel (ajuste conforme necessário)
+                df_oferta["tendencia_estoque"] = df_oferta["estoque"].rolling(window=window_size, min_periods=1).mean()
+
                 fig_estoques = go.Figure()
 
+                fig_estoques.add_trace(go.Bar(
+                    x=df_oferta["periodo"], 
+                    y=df_oferta["estoque"],
+                    marker_color="#006400",
+                    yaxis='y1',
+                    name="Estoque Mensal"
+                ))
+
+
+                # Adicionar linha de tendência curva (Média Móvel)
                 fig_estoques.add_trace(go.Scatter(
-                    x=df_oferta_anual["periodo"], 
-                    y=df_oferta_anual["estoque_final"],
-                    mode="lines+markers", 
-                    name="Estoque", 
-                    line=dict(
-                        color="#ADFF2F", 
-                        width=3
-                        )
+                    x=df_oferta["periodo"], 
+                    y=df_oferta["tendencia_estoque"],
+                    mode="lines",
+                    line=dict(color="#FF8800", width=3, dash="solid"), 
+                    yaxis='y1',
+                    name="Estoque (Média Móvel 12 Meses)"
+                ))
+
+                tabela_preco_3 = {
+                    "Chicago - CBOT (US$/t)": "chicago_cbot_u$/t",
+                    "FOB Porto - Paranaguá (US$/t)": "fob_porto_paranagua_u$/t",
+                    "Maringá / PR - R$/saca (sem ICMS)": "maringa_r$/saca",
+                    "Mogiana / SP - R$/saca (sem ICMS)": "mogiana_r$/saca",
+                    "Passo Fundo / RS - R$/saca (sem ICMS)": "passofundo_r$/saca",
+                    "Rondonopolis / MT - R$/saca (sem ICMS)": "rondonopolis_r$/saca",
+                }
+
+                coluna_preco_3 = tabela_preco_3[preco_selecionado_3]
+
+                fig_estoques.add_trace(go.Scatter(
+                    x=df_oferta["periodo"],
+                    y=df_oferta[coluna_preco_3],
+                    mode='lines',
+                    name='Preço da Soja',
+                    yaxis='y2',
+                    line=dict(color='#ADFF2F', width=2)
                 ))
 
                 fig_estoques.update_layout(
@@ -773,52 +753,408 @@ with st.container(border=True):
                         linecolor="gray",
                         linewidth=1,
                         tickmode="linear",
-                        dtick=2,
-                        tickangle=45                           
+                        dtick="M24",
+                        tickangle=45,
+                        tickformat="%Y",                          
                         ), 
                     yaxis=dict(
                         title="Estoque Mil Toneladas",
+                        side="left",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),
+                    yaxis2=dict(
+                        title=preco_selecionado_3, 
+                        overlaying="y", 
+                        side="right",
                         showline=True,
                         linecolor="gray",
                         linewidth=1
                         ),
                     height=400,
-                    margin=dict(l=10, r=10, t=20, b=10)
+                    margin=dict(l=10, r=10, t=20, b=0),
+                    legend=dict(
+                        orientation="h",  # Torna a legenda horizontal
+                        yanchor="top",    # Alinha no topo da posição definida
+                        y=-0.5,           # Move a legenda para a parte inferior do gráfico
+                        xanchor="center",  # Centraliza a legenda
+                        x=0.5
+                    )
                     )
         
                 st.plotly_chart(fig_estoques, use_container_width=True)
+        
+        with col2:
 
-    # container insights
+            with st.container(border=True): # cria container
+                st.markdown("<h5 style='text-align: center;'> 🔍 Correlação entre Média Movel dos estoques e Preço da Soja</h5>", unsafe_allow_html=True)
+
+                fig_scatter2 = px.scatter(
+                    df_oferta, 
+                    x=coluna_preco_2, 
+                    y="tendencia_estoque", 
+                    color="ano",
+                    color_continuous_scale="RdYlGn",
+                    trendline="ols",  # Adiciona a linha de tendência automaticamente
+                    trendline_color_override="blue",
+                    labels={coluna_preco_2: f"Preço da Soja ({preco_selecionado_2})", "estoque": "Estoque Mil Toneladas"},
+                    color_discrete_sequence=["#ADFF2F"],
+                    opacity=1
+                )
+
+                fig_scatter2.update_layout(
+                    xaxis=dict(
+                        title = f"Preço da Soja ({preco_selecionado_2})",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),
+                    yaxis=dict(
+                        title = "Estoque (Mil Toneladas)",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),            
+                    height=400,
+                    margin=dict(l=10, r=10, t=20, b=10)
+                )
+
+                st.plotly_chart(fig_scatter2, use_container_width=True)
+
+    # correlacao e insights do estoque
+    col, col1, col2, esp = st.columns([0.15,1.2,2.5,0.15])
+
+    # correlacao estoques e preco
+    with col1:
+        with st.container(border=False): # cria container
+            #st.markdown("<h5 style='margin-left: 50px;'> 📊 Estatísticas da Correlação</h5>", unsafe_allow_html=True)
+            #st.markdown("<br>", unsafe_allow_html=True)  # Adiciona espaço entre os blocos
+    
+            # Calcular correlação
+            correlacao_estoque = df_oferta["tendencia_estoque"].corr(df_oferta[coluna_preco_2])
+
+            # Exibir resultado formatado
+            st.metric(
+            label="Correlação de Pearson (Média Estoque vs. Preço Soja)",
+            value=f"{correlacao_estoque:.4f}",
+            delta="Positiva" if correlacao_estoque > 0 else "Negativa",
+            border = True
+            )
+
+    # insights estoque e preco
+    with col2:
+        with st.container(border=True): # cria container
+            st.markdown("""
+                <div style='margin-left: 30px; margin-right: 30px; margin-bottom: 20px; text-align: center;'>
+                    <p style='font-size: 14px;'>
+                        Os estoques de soja funcionam como um amortecedor de preços ao longo do tempo. Quando os estoques médios dos últimos 12 meses estão baixos, a menor oferta pode pressionar os preços para cima. No entanto, mesmo com estoques altos, os preços podem se manter firmes se a demanda interna e externa crescer na mesma proporção. Além disso, se o dólar sobe, a soja brasileira se torna mais competitiva para exportação, reduzindo estoques e sustentando os preços.<br>
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+
+
+    # container producao   
     with st.container(border=False):
         col1 , col2 = st.columns(2)
 
-        # insight producao e importacao
         with col1:
-            esp, texto, esp = st.columns([0.1,1.4,0.1])
+            with st.container(border=True):
+                st.markdown("<h5 style='text-align: center;'> 📈 Evolução da Produção</h5>", unsafe_allow_html=True)
+                
+                # Calcular a somatorio ultimos 12 meses (ajustável)
+                window_size = 12  # Tamanho da janela da soma móvel (12 meses)
+                df_oferta["producao_12_meses"] = df_oferta["producao"].rolling(window=window_size, min_periods=1).sum()
 
-            with texto:
-                with st.container(border=True):
-                    st.markdown("""
-                        <div style='margin-left: 10px; margin-right: 10px; margin-bottom: 5px; margin-top: 5px; text-align: center;'>
-                            <p style='font-size: 14px;'>
-                                A produção de soja tem um crescimento contínuo ao longo dos anos, impulsionada por avanços tecnológicos e expansão da área plantada. Em períodos de baixa produção, por exemplo, a importação pode se tornar um fator relevante para equilibrar a oferta.<br>
-                            </p>
-                        </div>
-                        """, unsafe_allow_html=True)
+                fig_producao = go.Figure()
 
-       # insight estoque         
+                fig_producao.add_trace(go.Bar(
+                    x=df_oferta["periodo"], 
+                    y=df_oferta["producao"],
+                    marker_color="#006400", 
+                    name="Producao Mensal"
+                ))
+
+
+                # Adicionar linha de tendência curva
+                fig_producao.add_trace(go.Scatter(
+                    x=df_oferta["periodo"], 
+                    y=df_oferta["producao_12_meses"],
+                    mode="lines",
+                    line=dict(color="#FF8800", width=3, dash="solid"),  # Linha contínua vermelha
+                    name="Produção somatório 12 Meses"
+                ))
+
+                fig_producao.add_trace(go.Scatter(
+                    x=df_oferta["periodo"],
+                    y=df_oferta[coluna_preco_3],
+                    mode='lines',
+                    name='Preço da Soja',
+                    yaxis='y2',
+                    line=dict(color='#ADFF2F', width=2)
+                ))
+
+                fig_producao.update_layout(
+                    xaxis=dict(
+                        title="Período",
+                        side="left",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1,
+                        tickmode="linear",
+                        dtick="M24",
+                        tickangle=45,
+                        tickformat="%Y",                          
+                        ), 
+                    yaxis=dict(
+                        title="Produção Mil Toneladas",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),
+                    yaxis2=dict(
+                        title=preco_selecionado_3, 
+                        overlaying="y", 
+                        side="right",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),
+                    height=400,
+                    margin=dict(l=10, r=10, t=20, b=10),
+                    legend=dict(
+                        orientation="h",  # Torna a legenda horizontal
+                        yanchor="top",    # Alinha no topo da posição definida
+                        y=-0.5,           # Move a legenda para a parte inferior do gráfico
+                        xanchor="center",  # Centraliza a legenda
+                        x=0.5
+                    )
+                    )
+        
+                st.plotly_chart(fig_producao, use_container_width=True)
+        
+        # correlacao producao e preco
         with col2:
-            esp, texto, esp = st.columns([0.15,1,0.15])
 
-            with texto:
-                with st.container(border=True):
-                    st.markdown("""
-                        <div style='margin-left: 25px; margin-right: 25px; margin-bottom: 20px; margin-top: 20px; text-align: center;'>
-                            <p style='font-size: 14px;'>
-                                Os estoques de soja funcionam como um amortecedor de preços. Quando os estoques estão baixos, o mercado pode reagir com alta nos preços devido à menor disponibilidade de grãos.<br>
-                            </p>
-                        </div>
-                        """, unsafe_allow_html=True)
+            with st.container(border=True): # cria container
+                st.markdown("<h5 style='text-align: center;'> 🔍 Correlação entre Produção 12 Meses e Preço da Soja</h5>", unsafe_allow_html=True)
+
+                fig_scatter3 = px.scatter(
+                    df_oferta, 
+                    x=coluna_preco_3, 
+                    y="producao_12_meses", 
+                    color="ano",
+                    color_continuous_scale="RdYlGn",
+                    trendline="ols",  # Adiciona a linha de tendência automaticamente
+                    trendline_color_override="blue",
+                    labels={coluna_preco_3: f"Preço da Soja ({preco_selecionado_3})", "producao": "Produção Mil Toneladas"},
+                    color_discrete_sequence=["#ADFF2F"],
+                    opacity=1
+                )
+
+                fig_scatter3.update_layout(
+                    xaxis=dict(
+                        title = f"Preço da Soja ({preco_selecionado_3})",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),
+                    yaxis=dict(
+                        title = "Produção (Mil Toneladas)",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),            
+                    height=400,
+                    margin=dict(l=10, r=10, t=20, b=10)
+                )
+
+                st.plotly_chart(fig_scatter3, use_container_width=True)
+
+
+
+    # correlacao e insights da producao
+    col, col1, col2, esp = st.columns([0.15,1.2,2.5,0.15])
+
+    # correlacao producao e preco
+    with col1:
+        with st.container(border=False): # cria container
+            #st.markdown("<h5 style='margin-left: 50px;'> 📊 Estatísticas da Correlação</h5>", unsafe_allow_html=True)
+            #st.markdown("<br>", unsafe_allow_html=True)  # Adiciona espaço entre os blocos
+    
+            # Calcular correlação
+            correlacao_producao = df_oferta["producao_12_meses"].corr(df_oferta[coluna_preco_3])
+
+            # Exibir resultado formatado
+            st.metric(
+            label="Correlação de Pearson (Produção 12 M vs. Preço Soja)",
+            value=f"{correlacao_producao:.4f}",
+            delta="Positiva" if correlacao_producao > 0 else "Negativa",
+            border = True
+            )
+
+    # insights producao e preco
+    with col2:
+        with st.container(border=True): # cria container
+            st.markdown("""
+                <div style='margin-left: 30px; margin-right: 30px; margin-bottom: 20px; text-align: center;'>
+                    <p style='font-size: 14px;'>
+                        A forte correlação positiva sugere que o crescimento da produção tem sido acompanhado por preços mais altos. As explicações: Aumento da demanda global, impulsionado pela China e outros grandes importadores. Expansão da capacidade de exportação brasileira, não gerando excesso de oferta interna. Câmbio favorável (USD/BRL alto), tornando a soja brasileira mais competitiva e sustentando os preços mesmo com produção crescente.<br>
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+
+
+    # container importacao  
+    with st.container(border=False):
+        col1 , col2 = st.columns(2)
+
+        with col1:
+            with st.container(border=True):
+                st.markdown("<h5 style='text-align: center;'> 📈 Evolução da Importação</h5>", unsafe_allow_html=True)
+                
+                # Calcular a somatorio ultimos 12 meses (ajustável)
+                window_size = 12  # Tamanho da janela da soma móvel (12 meses)
+                df_oferta["importacao_12_meses"] = df_oferta["importacao"].rolling(window=window_size, min_periods=1).sum()
+
+                fig_importacao = go.Figure()
+
+                fig_importacao.add_trace(go.Bar(
+                    x=df_oferta["periodo"], 
+                    y=df_oferta["importacao"],
+                    marker_color="#006400", 
+                    name="Importação Mensal"
+                ))
+
+
+                # Adicionar linha de tendência curva
+                fig_importacao.add_trace(go.Scatter(
+                    x=df_oferta["periodo"], 
+                    y=df_oferta["importacao_12_meses"],
+                    mode="lines",
+                    line=dict(color="#FF8800", width=3, dash="solid"),  # Linha contínua vermelha
+                    name="Importação 12 Meses"
+                ))
+
+                fig_importacao.add_trace(go.Scatter(
+                    x=df_oferta["periodo"],
+                    y=df_oferta[coluna_preco_3],
+                    mode='lines',
+                    name='Preço da Soja',
+                    yaxis='y2',
+                    line=dict(color='#ADFF2F', width=2)
+                ))
+
+                fig_importacao.update_layout(
+                    xaxis=dict(
+                        title="Período",
+                        side="left",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1,
+                        tickmode="linear",
+                        dtick="M24",
+                        tickangle=45,
+                        tickformat="%Y",                          
+                        ), 
+                    yaxis=dict(
+                        title="Importação Mil Toneladas",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),
+                    yaxis2=dict(
+                        title=preco_selecionado_3, 
+                        overlaying="y", 
+                        side="right",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),
+                    height=400,
+                    margin=dict(l=10, r=10, t=20, b=10),
+                    legend=dict(
+                        orientation="h",  # Torna a legenda horizontal
+                        yanchor="top",    # Alinha no topo da posição definida
+                        y=-0.5,           # Move a legenda para a parte inferior do gráfico
+                        xanchor="center",  # Centraliza a legenda
+                        x=0.5
+                    )
+                    )
+        
+                st.plotly_chart(fig_importacao, use_container_width=True)
+        
+        # correlacao importacao e preco
+        with col2:
+
+            with st.container(border=True): # cria container
+                st.markdown("<h5 style='text-align: center;'> 🔍 Correlação entre Importação 12 Meses e Preço da Soja</h5>", unsafe_allow_html=True)
+
+                fig_scatter4 = px.scatter(
+                    df_oferta, 
+                    x=coluna_preco_3, 
+                    y="importacao_12_meses", 
+                    color="ano",
+                    color_continuous_scale="RdYlGn",
+                    trendline="ols",  # Adiciona a linha de tendência automaticamente
+                    trendline_color_override="blue",
+                    labels={coluna_preco_3: f"Preço da Soja ({preco_selecionado_3})", "importacao": "Importação Mil Toneladas"},
+                    color_discrete_sequence=["#ADFF2F"],
+                    opacity=1
+                )
+
+                fig_scatter4.update_layout(
+                    xaxis=dict(
+                        title = f"Preço da Soja ({preco_selecionado_3})",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),
+                    yaxis=dict(
+                        title = "Importação (Mil Toneladas)",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),            
+                    height=400,
+                    margin=dict(l=10, r=10, t=20, b=10)
+                )
+
+                st.plotly_chart(fig_scatter4, use_container_width=True)
+
+
+
+    # correlacao e insights da importacao
+    col, col1, col2, esp = st.columns([0.15,1.2,2.5,0.15])
+
+    # correlacao importacao e preco
+    with col1:
+        with st.container(border=False): # cria container
+            #st.markdown("<h5 style='margin-left: 50px;'> 📊 Estatísticas da Correlação</h5>", unsafe_allow_html=True)
+            #st.markdown("<br>", unsafe_allow_html=True)  # Adiciona espaço entre os blocos
+    
+            # Calcular correlação
+            correlacao_importacao = df_oferta["importacao_12_meses"].corr(df_oferta[coluna_preco_3])
+
+            # Exibir resultado formatado
+            st.metric(
+            label="Correlação de Pearson (Importação 12 M vs. Preço Soja)",
+            value=f"{correlacao_importacao:.4f}",
+            delta="Positiva" if correlacao_importacao > 0 else "Negativa",
+            border = True
+            )
+
+    # insights importacao e preco
+    with col2:
+        with st.container(border=True): # cria container
+            st.markdown("""
+                <div style='margin-left: 30px; margin-right: 30px; margin-bottom: 20px; text-align: center;'>
+                    <p style='font-size: 14px;'>
+                        A importação de soja tem baixo impacto na formação de preços. Como o Brasil é um grande produtor e exportador, a importação ocorre apenas em momentos pontuais, geralmente para suprir déficits da indústria. Mesmo quando as importações aumentam, os preços seguem sendo influenciados por fatores mais relevantes, como produção, estoques, exportação e câmbio. <br>
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+
 
 
 
@@ -827,121 +1163,266 @@ with st.container(border=True):
 # ---------------------------------------------- seção 04 - Demanda ----------------------------------------------------------------------
 
 with st.container(border=True):
-        
+    
     # container titulo demanda
     with st.container(border=True):
-
-        titulo, periodo, espaco = st.columns([2, 1, 0.3])
+        titulo, espm, periodo, espm, tipo_preco = st.columns([2, 0.1, 1, 0.1, 1.5])
 
         with titulo:
-            st.markdown("<h4 style='text-align: center; margin-top: 18px;'> 💡 Análise da Demanda: Exportação, Processamento e Sementes</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='text-align: center; margin-top: 18px;'> 🧐 Demanda: Exportação e Processamento</h4>", unsafe_allow_html=True)
 
         with periodo:
             anos_selecionados_4 = st.slider(
                 "Selecione o Período:",
-                min_value=int(df["ano"].min()),
-                max_value=int(df["ano"].max()),
-                value=(int(df["ano"].min()), int(df["ano"].max())),
+                min_value=int(df_ano["periodo"].min()),
+                max_value=int(df_ano["periodo"].max()),
+                value=(int(df_ano["periodo"].min()), int(df_ano["periodo"].max())),
                 key="slider_4"
             )
+
+        with tipo_preco:
+            preco_selecionado_4 = st.selectbox(
+                "Selecione o Preço:",
+                ["Chicago - CBOT (US$/t)", "FOB Porto - Paranaguá (US$/t)", 
+                "Maringá / PR - R$/saca (sem ICMS)", "Mogiana / SP - R$/saca (sem ICMS)", 
+                "Passo Fundo / RS - R$/saca (sem ICMS)", "Rondonopolis / MT - R$/saca (sem ICMS)"],
+                index=5,
+                key="select_4"
+        )
+
 
     # filtro e tratamento de dados
     df_demanda = df[(df["ano"] >= anos_selecionados_4[0]) & (df["ano"] <= anos_selecionados_4[1])]
     df_demanda["periodo"] = pd.to_datetime(df_demanda["ano_mes"])
-    df_demanda_anual = df_ano[(df_ano["periodo"] >= anos_selecionados_4[0]) & (df_ano["periodo"] <= anos_selecionados_4[1])]
+    #df_demanda_anual = df_ano[(df_ano["periodo"] >= anos_selecionados_4[0]) & (df_ano["periodo"] <= anos_selecionados_4[1])]
     
-    # container graficos
-    with st.container(border=True):
+
+    # container exportacao  
+    with st.container(border=False):
         col1 , col2 = st.columns(2)
 
-        # grafico exportacao
         with col1:
             with st.container(border=True):
-                st.markdown("<h5 style='text-align: center;'> 🌱 Exportação e Sementes/Outros</h5>", unsafe_allow_html=True)
-                fig_exp = go.Figure()
+                st.markdown("<h5 style='text-align: center;'> 📈 Evolução da Exportação</h5>", unsafe_allow_html=True)
+                
+                # Calcular a somatorio ultimos 12 meses (ajustável)
+                window_size = 12  # Tamanho da janela da soma móvel (12 meses)
+                df_demanda["exportacao_12_meses"] = df_demanda["exportacao"].rolling(window=window_size, min_periods=1).sum()
 
-                fig_exp.add_trace(go.Scatter(
-                    x=df_demanda_anual["periodo"], 
-                    y=df_demanda_anual["exportacao"], 
-                    mode="lines+markers",
-                    name="Exportação Anual" ,
-                    line=dict(color="#FF8800", width=2),
-                    yaxis="y2"
+                fig_exportacao = go.Figure()
+
+                fig_exportacao.add_trace(go.Bar(
+                    x=df_demanda["periodo"], 
+                    y=df_demanda["exportacao"],
+                    marker_color="#006400", 
+                    name="Exportação Mensal"
                 ))
 
-                fig_exp.add_trace(go.Bar(
-                    x=df_demanda_anual["periodo"], 
-                    y=df_demanda_anual["Sementes/Outros"], 
-                    marker_color="#008000",
-                    name="Sementes / Outros",
-                    opacity=0.7,
-                    yaxis="y1"
+
+                # Adicionar linha de tendência curva
+                fig_exportacao.add_trace(go.Scatter(
+                    x=df_demanda["periodo"], 
+                    y=df_demanda["exportacao_12_meses"],
+                    mode="lines",
+                    line=dict(color="#FF8800", width=3, dash="solid"),  # Linha contínua vermelha
+                    name="Exportação 12 Meses"
+                ))
+                
+                tabela_preco_4 = {
+                    "Chicago - CBOT (US$/t)": "chicago_cbot_u$/t",
+                    "FOB Porto - Paranaguá (US$/t)": "fob_porto_paranagua_u$/t",
+                    "Maringá / PR - R$/saca (sem ICMS)": "maringa_r$/saca",
+                    "Mogiana / SP - R$/saca (sem ICMS)": "mogiana_r$/saca",
+                    "Passo Fundo / RS - R$/saca (sem ICMS)": "passofundo_r$/saca",
+                    "Rondonopolis / MT - R$/saca (sem ICMS)": "rondonopolis_r$/saca",
+                }
+
+                coluna_preco_4 = tabela_preco_4[preco_selecionado_4]
+
+
+
+                fig_exportacao.add_trace(go.Scatter(
+                    x=df_demanda["periodo"],
+                    y=df_demanda[coluna_preco_4],
+                    mode='lines',
+                    name='Preço da Soja',
+                    yaxis='y2',
+                    line=dict(color='#ADFF2F', width=2)
                 ))
 
-                fig_exp.update_layout(
+                fig_exportacao.update_layout(
                     xaxis=dict(
-                        title="Ano",
+                        title="Período",
+                        side="left",
                         showline=True,
                         linecolor="gray",
                         linewidth=1,
                         tickmode="linear",
-                        dtick="2",
-                        tickangle=45
-                        ),
-                    yaxis2=dict(
+                        dtick="M24",
+                        tickangle=45,
+                        tickformat="%Y",                          
+                        ), 
+                    yaxis=dict(
                         title="Exportação Mil Toneladas",
-                        side="left",
-                        overlaying="y",
                         showline=True,
                         linecolor="gray",
                         linewidth=1
-                    ),
-                    yaxis=dict(
-                        title="Utilização Sementes / Outros",
+                        ),
+                    yaxis2=dict(
+                        title=preco_selecionado_4, 
+                        overlaying="y", 
                         side="right",
                         showline=True,
                         linecolor="gray",
                         linewidth=1
-                    ),
-                    legend=dict(
-                        orientation="h", 
-                        yanchor="top", 
-                        y=-0.24,
-                        x=0.2
                         ),
+                    height=400,
+                    margin=dict(l=10, r=10, t=20, b=10),
+                    legend=dict(
+                        orientation="h",  # Torna a legenda horizontal
+                        yanchor="top",    # Alinha no topo da posição definida
+                        y=-0.5,           # Move a legenda para a parte inferior do gráfico
+                        xanchor="center",  # Centraliza a legenda
+                        x=0.5
+                    )
+                    )
+        
+                st.plotly_chart(fig_exportacao, use_container_width=True)
+
+        # correlacao exportacao e preco
+        with col2:
+
+            with st.container(border=True): # cria container
+                st.markdown("<h5 style='text-align: center;'> 🔍 Correlação entre Exportação 12 Meses e Preço da Soja</h5>", unsafe_allow_html=True)
+
+                fig_scatter5 = px.scatter(
+                    df_demanda, 
+                    x=coluna_preco_4, 
+                    y="exportacao_12_meses", 
+                    color="ano",
+                    color_continuous_scale="RdYlGn",
+                    trendline="ols",  # Adiciona a linha de tendência automaticamente
+                    trendline_color_override="blue",
+                    labels={coluna_preco_4: f"Preço da Soja ({preco_selecionado_4})", "exportacao": "Exportação Mil Toneladas"},
+                    color_discrete_sequence=["#ADFF2F"],
+                    opacity=1
+                )
+
+                fig_scatter5.update_layout(
+                    xaxis=dict(
+                        title = f"Preço da Soja ({preco_selecionado_4})",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),
+                    yaxis=dict(
+                        title = "Exportação (Mil Toneladas)",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),            
                     height=400,
                     margin=dict(l=10, r=10, t=20, b=10)
                 )
-       
-        
-                st.plotly_chart(fig_exp, use_container_width=True)
 
-        # grafico processamento
-        with col2:
+                st.plotly_chart(fig_scatter5, use_container_width=True)
+
+    # correlacao e insights da exportacao
+    col, col1, col2, esp = st.columns([0.15,1.2,2.5,0.15])
+
+    # correlacao exportacao e preco
+    with col1:
+        with st.container(border=False): # cria container
+            #st.markdown("<h5 style='margin-left: 50px;'> 📊 Estatísticas da Correlação</h5>", unsafe_allow_html=True)
+            #st.markdown("<br>", unsafe_allow_html=True)  # Adiciona espaço entre os blocos
+    
+            # Calcular correlação
+            correlacao_exportacao = df_demanda["exportacao_12_meses"].corr(df_demanda[coluna_preco_4])
+
+            # Exibir resultado formatado
+            st.metric(
+            label="Correlação de Pearson (Exportação 12 M vs. Preço Soja)",
+            value=f"{correlacao_exportacao:.4f}",
+            delta="Positiva" if correlacao_exportacao > 0 else "Negativa",
+            border = True
+            )
+
+    # insights exportacao e preco
+    with col2:
+        with st.container(border=True): # cria container
+            st.markdown("""
+                <div style='margin-left: 30px; margin-right: 30px; margin-bottom: 20px; text-align: center;'>
+                    <p style='font-size: 14px;'>
+                        A exportação de soja tem forte influência na formação de preços. Isso indica que, à medida que as exportações aumentam, os preços tendem a subir, refletindo a maior demanda externa. Além disso, a competitividade da soja brasileira no mercado global, impulsionada pelo câmbio e pela demanda internacional, reforça essa relação ao reduzir a oferta disponível no mercado interno. <br>
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+
+    # container processamento 
+    with st.container(border=False):
+        col1 , col2 = st.columns(2)
+
+        with col1:
             with st.container(border=True):
                 st.markdown("<h5 style='text-align: center;'> 📈 Evolução do Processamento</h5>", unsafe_allow_html=True)
-                fig_proc = go.Figure()
+                
+                # Calcular a somatorio ultimos 12 meses (ajustável)
+                window_size = 12  # Tamanho da janela da soma móvel (12 meses)
+                df_demanda["processamento_12_meses"] = df_demanda["processamento"].rolling(window=window_size, min_periods=1).sum()
 
-                fig_proc.add_trace(go.Scatter(
-                    x=df_demanda_anual["periodo"], 
-                    y=df_demanda_anual["processamento"],
-                    mode="lines+markers", 
-                    name="Processamento Anual", 
-                    line=dict(
-                        color="#ADFF2F", 
-                        width=3
-                        )
+                fig_processamento = go.Figure()
+
+                fig_processamento.add_trace(go.Bar(
+                    x=df_demanda["periodo"], 
+                    y=df_demanda["processamento"],
+                    marker_color="#006400", 
+                    name="Processamento Mensal"
                 ))
 
-                fig_proc.update_layout(
+
+                # Adicionar linha de tendência curva
+                fig_processamento.add_trace(go.Scatter(
+                    x=df_demanda["periodo"], 
+                    y=df_demanda["processamento_12_meses"],
+                    mode="lines",
+                    line=dict(color="#FF8800", width=3, dash="solid"),  # Linha contínua vermelha
+                    name="Processamento 12 Meses"
+                ))
+                
+                tabela_preco_4 = {
+                    "Chicago - CBOT (US$/t)": "chicago_cbot_u$/t",
+                    "FOB Porto - Paranaguá (US$/t)": "fob_porto_paranagua_u$/t",
+                    "Maringá / PR - R$/saca (sem ICMS)": "maringa_r$/saca",
+                    "Mogiana / SP - R$/saca (sem ICMS)": "mogiana_r$/saca",
+                    "Passo Fundo / RS - R$/saca (sem ICMS)": "passofundo_r$/saca",
+                    "Rondonopolis / MT - R$/saca (sem ICMS)": "rondonopolis_r$/saca",
+                }
+
+                coluna_preco_4 = tabela_preco_4[preco_selecionado_4]
+
+
+
+                fig_processamento.add_trace(go.Scatter(
+                    x=df_demanda["periodo"],
+                    y=df_demanda[coluna_preco_4],
+                    mode='lines',
+                    name='Preço da Soja',
+                    yaxis='y2',
+                    line=dict(color='#ADFF2F', width=2)
+                ))
+
+                fig_processamento.update_layout(
                     xaxis=dict(
                         title="Período",
+                        side="left",
                         showline=True,
                         linecolor="gray",
                         linewidth=1,
                         tickmode="linear",
-                        dtick=2,
-                        tickangle=45                           
+                        dtick="M24",
+                        tickangle=45,
+                        tickformat="%Y",                          
                         ), 
                     yaxis=dict(
                         title="Processamento Mil Toneladas",
@@ -949,252 +1430,93 @@ with st.container(border=True):
                         linecolor="gray",
                         linewidth=1
                         ),
+                    yaxis2=dict(
+                        title=preco_selecionado_4, 
+                        overlaying="y", 
+                        side="right",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),
                     height=400,
-                    margin=dict(l=10, r=10, t=20, b=10)
+                    margin=dict(l=10, r=10, t=20, b=10),
+                    legend=dict(
+                        orientation="h",  # Torna a legenda horizontal
+                        yanchor="top",    # Alinha no topo da posição definida
+                        y=-0.5,           # Move a legenda para a parte inferior do gráfico
+                        xanchor="center",  # Centraliza a legenda
+                        x=0.5
+                    )
                     )
         
-                st.plotly_chart(fig_proc, use_container_width=True)
+                st.plotly_chart(fig_processamento, use_container_width=True)
 
-    # container insights
-    with st.container(border=False):
-        col1 , col2 = st.columns(2)
-
-        # insight exportacao
-        with col1:
-            esp, texto, esp = st.columns([0.1,1.4,0.1])
-
-            with texto:
-                with st.container(border=True):
-                    st.markdown("""
-                        <div style='margin-left: 10px; margin-right: 10px; margin-bottom: 5px; margin-top: 5px; text-align: center;'>
-                            <p style='font-size: 14px;'>
-                                O Brasil é um dos maiores exportadores de soja do mundo, com a China sendo o principal destino. O aumento das exportações pode pressionar os preços internos para cima, enquanto restrições comerciais ou quedas na demanda global podem levar a um acúmulo de estoques e queda nos preços.<br>
-                            </p>
-                        </div>
-                        """, unsafe_allow_html=True)
-
-        # insight processamento               
+        # correlacao processamento e preco
         with col2:
-            esp, texto, esp = st.columns([0.1,1.4,0.1])
 
-            with texto:
-                with st.container(border=True):
-                    st.markdown("""
-                        <div style='margin-left: 10px; margin-right: 10px; margin-bottom: 5px; margin-top: 5px; text-align: center;'>
-                            <p style='font-size: 14px;'>
-                                O processamento de soja é fundamental para a indústria de farelo e óleo, que atendem tanto ao mercado interno quanto ao externo. Um aumento na capacidade de processamento pode reduzir a oferta de soja em grão disponível para exportação, alterando a dinâmica de preços.<br>
-                            </p>
-                        </div>
-                        """, unsafe_allow_html=True)
+            with st.container(border=True): # cria container
+                st.markdown("<h5 style='text-align: center;'> 🔍 Correlação entre Processamento 12 Meses e Preço da Soja</h5>", unsafe_allow_html=True)
 
+                fig_scatter6 = px.scatter(
+                    df_demanda, 
+                    x=coluna_preco_4, 
+                    y="processamento_12_meses", 
+                    color="ano",
+                    color_continuous_scale="RdYlGn",
+                    trendline="ols",  # Adiciona a linha de tendência automaticamente
+                    trendline_color_override="blue",
+                    labels={coluna_preco_4: f"Preço da Soja ({preco_selecionado_4})", "processamento": "Processamento Mil Toneladas"},
+                    color_discrete_sequence=["#ADFF2F"],
+                    opacity=1
+                )
 
+                fig_scatter6.update_layout(
+                    xaxis=dict(
+                        title = f"Preço da Soja ({preco_selecionado_4})",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),
+                    yaxis=dict(
+                        title = "Processamento (Mil Toneladas)",
+                        showline=True,
+                        linecolor="gray",
+                        linewidth=1
+                        ),            
+                    height=400,
+                    margin=dict(l=10, r=10, t=20, b=10)
+                )
 
+                st.plotly_chart(fig_scatter6, use_container_width=True)
 
-
-
-# ----------------------------------------------- seção 05 - Dinâmica Oferta / Demanda e Impacto no Preço ------------------------------------
-
-with st.container(border=True):
-    
-    # container titulo oferta-demanda
-    with st.container(border=True):
-        
-        titulo, espm, periodo, espm, preco = st.columns([1.5, 0.1, 1, 0.1, 1.5])
-
-        with titulo:
-            st.markdown("<h4 style='text-align: center; margin-top: 18px;'> 💰 Impacto Oferta-Demanda</h4>", unsafe_allow_html=True)
-
-        with periodo:
-            anos_selecionados_5 = st.slider(
-                "Selecione o Período:",
-                min_value=int(df["ano"].min()),
-                max_value=int(df["ano"].max()),
-                value=(int(df["ano"].min()), int(df["ano"].max())),
-                key="slider_5"
-            )
-
-        with preco:
-            preco_selecionado_5 = st.selectbox(
-                "Selecione o Preço:",
-                ["Chicago - CBOT (US$/t)", "FOB Porto - Paranaguá (US$/t)", 
-                "Maringá / PR - R$/saca (sem ICMS)", "Mogiana / SP - R$/saca (sem ICMS)", 
-                "Passo Fundo / RS - R$/saca (sem ICMS)", "Rondonopolis / MT - R$/saca (sem ICMS)"],
-                index=5,
-                key="select_5"
-            )
-
-    # container do insight oferta demanda
-    with st.container(border=False):
-        esp, texto, exp = st.columns([0.3,1,0.3])
-
-        with texto:
-            with st.container(border=True):
-                st.markdown("""
-                <div style='margin-left: 30px; margin-right: 30px; margin-bottom: 40px; margin-top: 20px; text-align: center;'>
-                    <p style='font-size: 14px;'>
-                        A relação entre saldo oferta-demanda e o preço da soja pode ser volátil. Embora a influência não seja tão forte quanto a do câmbio, períodos de alta demanda ou estoques reduzidos podem impactar os preços de forma significativa.<br>
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
-
-    # filtro e tratamento de dados
-    df_saldo = df[(df["ano"] >= anos_selecionados_5[0]) & (df["ano"] <= anos_selecionados_5[1])]
-    df_saldo["periodo"] = pd.to_datetime(df_saldo["ano_mes"])
-    df_saldo["saldo_estoque"] = df_saldo["estoque"].diff()
-    df_saldo = df_saldo.fillna(0)
-    df_saldo_anual = df_ano[(df_ano["periodo"] >= anos_selecionados_5[0]) & (df_ano["periodo"] <= anos_selecionados_5[1])]
-    df_saldo_anual["saldo_estoque"] = df_saldo_anual["estoque_final"] - df_saldo_anual["estoque_inicial"]
-    df_saldo_anual = df_saldo_anual.fillna(0)
-    tabela_preco_5 = {
-            "Chicago - CBOT (US$/t)": "chicago_cbot_u$/t",
-            "FOB Porto - Paranaguá (US$/t)": "fob_porto_paranagua_u$/t",
-            "Maringá / PR - R$/saca (sem ICMS)": "maringa_r$/saca",
-            "Mogiana / SP - R$/saca (sem ICMS)": "mogiana_r$/saca",
-            "Passo Fundo / RS - R$/saca (sem ICMS)": "passofundo_r$/saca",
-            "Rondonopolis / MT - R$/saca (sem ICMS)": "rondonopolis_r$/saca",
-        }
-    coluna_preco_5 = tabela_preco_5[preco_selecionado_5]
-
-
-    col1 , col2 = st.columns(2)
-
-    # grafico saldo oferta-demanda e preco
-    with col1:
-        with st.container(border=True):
-            st.markdown("<h5 style='text-align: center;'>  Saldo Oferta-Demanda vs. Preço da Soja</h5>", unsafe_allow_html=True)
-            fig_prod_imp = go.Figure()
-
-            # barras oferta / Demanda
-            fig_prod_imp.add_trace(go.Bar(
-                x=df_saldo_anual["periodo"], 
-                y=df_saldo_anual["saldo_estoque"], 
-                marker_color="#008000",
-                name=f'Saldo Oferta-Demanda',
-                opacity=0.7,
-                yaxis="y1",
-                xaxis="x1"
-            ))
-
-
-            # linha do preço da soja
-            fig_prod_imp.add_trace(go.Scatter(
-                x=df_saldo["periodo"], 
-                y=df_saldo[coluna_preco_5], 
-                marker_color="#FF8800",
-                name=f'{preco_selecionado_5}',
-                opacity=0.7,
-                yaxis="y2",
-                xaxis="x2"
-            ))
-
-            fig_prod_imp.update_layout(
-                xaxis=dict(
-                    title="Ano",
-                    showline=True,
-                    linecolor="gray",
-                    linewidth=1,
-                    tickmode="linear",
-                    dtick=2,
-                    tickangle=45
-                    ),  
-                xaxis2=dict(
-                    showline=False,
-                    overlaying="x",
-                    showticklabels=False
-                    ),
-                yaxis=dict(
-                    title="Saldo Oferta-Demanda",
-                    side="left",
-                    showline=True,
-                    linecolor="gray",
-                    linewidth=1
-                ),
-                yaxis2=dict(
-                    title='Preço da Soja',
-                    side="right",
-                    overlaying="y",
-                    showline=True,
-                    linecolor="gray",
-                    linewidth=1
-                ),
-                legend=dict(
-                    orientation="h", 
-                    yanchor="top", 
-                    y=-0.24
-                    ),
-                height=400,
-                margin=dict(l=10, r=10, t=20, b=10)
-            )
-       
-        
-            st.plotly_chart(fig_prod_imp, use_container_width=True)
-
-    # grafico correlacao oferta-demanda e preco
-    with col2:
-        with st.container(border=True):
-            st.markdown("<h5 style='text-align: center;'> 🔍 Correlação Oferta-Demanda e Preço da Soja</h5>", unsafe_allow_html=True)
-
-            fig_scatter = px.scatter(
-                df_saldo, 
-                x=coluna_preco_5, 
-                y="saldo_estoque",
-                color="ano",
-                color_continuous_scale="viridis", 
-                trendline="ols",  # Adiciona a linha de tendência automaticamente
-                trendline_color_override="blue",
-                labels={coluna_preco_5: f"Preço da Soja ({preco_selecionado_5})", "saldo_estoque": "Saldo Oferta-Demanda"},
-                color_discrete_sequence=["#ADFF2F"],
-                opacity=0.7
-            )
-
-            fig_scatter.update_layout(
-                xaxis=dict(
-                    title = f"Preço da Soja ({preco_selecionado_5})",
-                    showline=True,
-                    linecolor="gray",
-                    linewidth=1
-                    ),
-                yaxis=dict(
-                    title = "Saldo Oferta-Demanda",
-                    showline=True,
-                    linecolor="gray",
-                    linewidth=1
-                    ),            
-                height=400,
-                margin=dict(l=10, r=10, t=20, b=10)
-            )
-
-            st.plotly_chart(fig_scatter, use_container_width=True)
-
+    # correlacao e insights da exportacao
     col, col1, col2, esp = st.columns([0.15,1.2,2.5,0.15])
 
-    # correlacao oferta-demanda e preco
+    # correlacao exportacao e preco
     with col1:
         with st.container(border=False): # cria container
             #st.markdown("<h5 style='margin-left: 50px;'> 📊 Estatísticas da Correlação</h5>", unsafe_allow_html=True)
             #st.markdown("<br>", unsafe_allow_html=True)  # Adiciona espaço entre os blocos
     
-         # Calcular correlação
-            correlacao = df_saldo["saldo_estoque"].corr(df_saldo[coluna_preco_5])
+            # Calcular correlação
+            correlacao_processamento = df_demanda["processamento_12_meses"].corr(df_demanda[coluna_preco_4])
 
             # Exibir resultado formatado
             st.metric(
-                label="Correlação de Pearson (Oferta-Demanda vs. Preço da Soja)",
-                value=f"{correlacao:.4f}",
-                delta="Positiva" if correlacao > 0 else "Negativa",
-                border = True
+            label="Correlação de Pearson (Processamento 12 M vs. Preço Soja)",
+            value=f"{correlacao_processamento:.4f}",
+            delta="Positiva" if correlacao_processamento > 0 else "Negativa",
+            border = True
             )
 
-    # insights oferta-demanda e preco
+    # insights exportacao e preco
     with col2:
         with st.container(border=True): # cria container
             st.markdown("""
-                <div style='margin-left: 20px; margin-right: 20px; margin-bottom: 10px; text-align: center;'>
+                <div style='margin-left: 30px; margin-right: 30px; margin-bottom: 20px; text-align: center;'>
                     <p style='font-size: 14px;'>
-                        ✔  A correlação entre saldo oferta-demanda e o preço da soja mostrou-se fraca, indicando impacto limitado na precificação do grão, podendo impactar a volatilidade no curto prazo, especialmente em quebra de produção ou demanda inesperada.<br>
-                        ✔  O câmbio se mostrou um fator muito mais influente, reforçando que o mercado internacional e a competitividade das exportações são os principais direcionadores do preço da soja no Brasil.
+                        O processamento de soja tem forte impacto na formação de preços. Isso indica que, à medida que a demanda interna por farelo e óleo de soja cresce, os preços tendem a subir, refletindo a menor disponibilidade de grãos no mercado. Além disso, o processamento acompanha o aumento da produção e exportação, reforçando sua influência sobre a dinâmica de oferta e demanda. <br>
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
-        
-
+            
