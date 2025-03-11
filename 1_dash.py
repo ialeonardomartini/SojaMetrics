@@ -1492,7 +1492,7 @@ with st.container(border=True):
     # correlacao e insights da exportacao
     col, col1, col2, esp = st.columns([0.15,1.2,2.5,0.15])
 
-    # correlacao exportacao e preco
+    # correlacao processamento e preco
     with col1:
         with st.container(border=False): # cria container
             #st.markdown("<h5 style='margin-left: 50px;'> 📊 Estatísticas da Correlação</h5>", unsafe_allow_html=True)
@@ -1509,7 +1509,7 @@ with st.container(border=True):
             border = True
             )
 
-    # insights exportacao e preco
+    # insights processamento e preco
     with col2:
         with st.container(border=True): # cria container
             st.markdown("""
