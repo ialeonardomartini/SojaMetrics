@@ -1,69 +1,72 @@
-# 🌱📊 SojaMetrics: Dashboard de Análise da Variação do Preço da Soja  
+# 🌱 SojaMetrics: Dashboard de Análise da Variação do Preço da Soja
 
-![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red?style=for-the-badge&logo=streamlit)  
-![Python](https://img.shields.io/badge/Python-Data%20Science-yellow?style=for-the-badge&logo=python)  
-![Plotly](https://img.shields.io/badge/Plotly-Visualizations-blue?style=for-the-badge&logo=plotly)  
-![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-green?style=for-the-badge&logo=pandas)  
+![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red?style=for-the-badge&logo=streamlit)
+![Python](https://img.shields.io/badge/Python-Data%20Science-yellow?style=for-the-badge&logo=python)
+![Plotly](https://img.shields.io/badge/Plotly-Visualizations-blue?style=for-the-badge&logo=plotly)
+![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-green?style=for-the-badge&logo=pandas)
 
-## 📌 Sobre o Dashboard  
+## 📌 Sobre o Dashboard
 
-**[SojaMetrics](https://sojametrics.streamlit.app/)** é um **dashboard interativo**, desenvolvido em **Streamlit**, para estudar a influência do **câmbio, da oferta e da demanda** na **formação do preço da soja** no Brasil.  
+**[SojaMetrics](https://sojametrics.streamlit.app/)** é um **dashboard interativo**, desenvolvido em **Streamlit**, que estuda a influência do **câmbio, da oferta e da demanda** na **formação do preço da soja** no Brasil.
 
-O objetivo é fornecer **insights visuais e análises quantitativas** sobre os fatores que impactam a precificação do mercado de soja, auxiliando produtores, traders e analistas do setor agropecuário.  
+O objetivo é fornecer **insights visuais e análises quantitativas** sobre os fatores que impactam a precificação do mercado de soja, auxiliando produtores, traders e analistas do setor agropecuário.
 
-🔗 **Acesse o dashboard aqui** → [SojaMetrics](https://sojametrics.streamlit.app/)  
-
----
-
-## 🚀 Funcionalidades Principais  
-
-✔ **Seção 1 - Panorama do Mercado**  
-> 📌 Visão geral dos principais **KPIs** do mercado de soja, incluindo estoque, exportação, demanda e preço.  
-
-✔ **Seção 2 - Impacto do Câmbio**  
-> 📌 Análise da **correlação entre a variação do dólar e o preço da soja**, avaliando sua influência no mercado.  
-
-✔ **Seção 3 - Oferta e Demanda**  
-> 📌 Comparação entre **produção, estoques, exportação** e impacto no preço da soja no Brasil.  
+🔗 **Acesse o dashboard aqui** → [SojaMetrics](https://sojametrics.streamlit.app/)
 
 ---
 
-## 📊 Principais Insights  
+## 🚀 Funcionalidades Principais
 
-🔹 **O câmbio é um dos principais fatores na precificação da soja!**  
-- Correlação forte de **0,8716** entre o preço da soja e a variação do dólar.  
+✔ **Panorama do Mercado**
+> 📌 Visão geral dos principais **indicadores-chave** do mercado de soja, incluindo saldo de oferta/demanda, produção e exportação.
 
-🔹 **O saldo oferta-demanda tem uma correlação fraca com o preço (-0,0509).**  
-- Indica que fatores internacionais e variações cambiais são mais relevantes do que apenas oferta e demanda interna.  
+✔ **Impacto do Câmbio**
+> 📌 Análise da **correlação entre a variação do dólar e o preço da soja**, avaliando sua influência no mercado.
 
-🔹 **Monitorar o câmbio e tendências globais é essencial para prever oscilações no preço da soja.**  
-
----
-
-## 🛠 Tecnologias Utilizadas  
-
-- **Python + Streamlit** → Para desenvolvimento da interface interativa 🖥️  
-- **Plotly** → Para gráficos dinâmicos e visualizações 📊  
-- **Pandas** → Para manipulação e análise de dados 📝  
+✔ **Oferta e Demanda**
+> 📌 Comparação entre **produção, estoques, exportação** e impacto no preço da soja no Brasil.
 
 ---
 
-## 🎯 Público-Alvo  
+## 📊 Principais Insights
 
-Este dashboard é ideal para:  
+🔹 **O câmbio é um dos principais fatores na precificação da soja!**
+- Correlação forte entre o preço da soja e a variação do dólar.
 
-✔ **Produtores rurais e traders** acompanhando a variação do preço da soja  
-✔ **Analistas de mercado** estudando a influência do câmbio e da demanda global  
-✔ **Pesquisadores e economistas** analisando correlações e tendências no setor agropecuário  
+🔹 **O saldo oferta-demanda tem uma correlação negativa com o preço.**
+- Indica que fatores internacionais e variações cambiais são mais relevantes do que apenas oferta e demanda interna.
 
-Se você trabalha com soja e quer **entender melhor os fatores que afetam seu preço**, esse dashboard é para você! 🚀  
+🔹 **Monitorar o câmbio e tendências globais é essencial para prever oscilações no preço da soja.**
 
 ---
 
-## 🔗 Acesse o Dashboard  
+## 🛠 Tecnologias Utilizadas
 
-🔍 **Veja a análise completa no SojaMetrics:**  
+- **Python + Streamlit** → Para desenvolvimento da interface interativa 🖥️
+- **Plotly** → Para gráficos dinâmicos e visualizações 📊
+- **Pandas** → Para manipulação e análise de dados 📝
 
-👉 **[Clique aqui para acessar](https://sojametrics.streamlit.app/)**  
+---
 
-Se tiver sugestões ou quiser contribuir com melhorias, abra uma *issue* ou um *pull request*! 😃  
+## 🎯 Público-Alvo
+
+Este dashboard é ideal para:
+
+✔ **Produtores rurais e traders** acompanhando a variação do preço da soja
+✔ **Analistas de mercado** estudando a influência do câmbio e da demanda global
+✔ **Pesquisadores e economistas** analisando correlações e tendências no setor agropecuário
+
+Se você trabalha com soja e quer **entender melhor os fatores que afetam seu preço**, esse dashboard é para você! 🚀
+
+---
+
+## 🔗 Acesse o Dashboard
+
+🔍 **Veja a análise completa no SojaMetrics:**
+
+👉 **[Clique aqui para acessar](https://sojametrics.streamlit.app/)**
+
+Se tiver sugestões ou quiser contribuir com melhorias, abra uma *issue* ou um *pull request*! 😃
+
+📌 **Autor:** [Leonardo Rossi Martini](https://www.linkedin.com/in/leonardormartini/)
+
