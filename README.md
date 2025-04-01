@@ -2,8 +2,10 @@
 
 ![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red?style=for-the-badge&logo=streamlit)
 ![Python](https://img.shields.io/badge/Python-Data%20Science-yellow?style=for-the-badge&logo=python)
-![Plotly](https://img.shields.io/badge/Plotly-Visualizations-blue?style=for-the-badge&logo=plotly)
 ![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-green?style=for-the-badge&logo=pandas)
+![Matplotlib](https://img.shields.io/badge/Matplotlib-Charting-orange?style=for-the-badge&logo=python)
+![Seaborn](https://img.shields.io/badge/Seaborn-Statistical%20Plots-cyan?style=for-the-badge&logo=python)
+![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-Machine%20Learning-blueviolet?style=for-the-badge&logo=scikit-learn)
 
 ## 📌 Sobre o Dashboard
 
